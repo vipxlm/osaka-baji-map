@@ -1,511 +1,473 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>BAJI BAZAAR 大阪商业考察</title>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" />
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+ <meta charset="UTF-8">
+ <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+ <title>BAJI BAZAAR 大阪商业考察地图</title>
+ <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+ <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+ <style>
+ * { margin: 0; padding: 0; box-sizing: border-box; }
+ 
+ body { 
+ font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Noto Sans SC', 'Hiragino Sans GB', sans-serif;
+ background: #faf9f6;
+ color: #1e293b;
+ overflow: hidden;
+ height: 100vh;
+ width: 100vw;
+ }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #f8fafc;
-            color: #1e293b;
-            height: 100vh;
-            overflow: hidden;
-        }
+ .container {
+ display: flex;
+ height: 100vh;
+ width: 100vw;
+ }
 
-        .container {
-            display: flex;
-            height: 100vh;
-        }
+ .sidebar {
+ width: 380px;
+ min-width: 380px;
+ height: 100vh;
+ background: #ffffff;
+ border-right: 1px solid #e2e8f0;
+ overflow-y: auto;
+ padding: 24px;
+ box-shadow: 4px 0 20px rgba(0,0,0,0.05);
+ z-index: 1000;
+ display: flex;
+ flex-direction: column;
+ gap: 20px;
+ }
 
-        .sidebar {
-            width: 380px;
-            min-width: 380px;
-            background: #ffffff;
-            border-right: 1px solid #e2e8f0;
-            overflow-y: auto;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+ .map-container {
+ flex: 1;
+ height: 100vh;
+ position: relative;
+ background: #faf9f6;
+ }
 
-        .map-container {
-            flex: 1;
-            position: relative;
-        }
+ #map { 
+ width: 100%; 
+ height: 100%;
+ background: #faf9f6;
+ z-index: 1;
+ }
 
-        #map { height: 100%; width: 100%; }
+ .header {
+ padding-bottom: 16px;
+ border-bottom: 2px solid #f1f5f9;
+ margin-bottom: 4px;
+ }
 
-        .header h1 {
-            font-size: 22px;
-            font-weight: 800;
-            color: #0f172a;
-            margin-bottom: 4px;
-        }
+ .header h1 {
+ font-size: 20px;
+ font-weight: 700;
+ color: #0f172a;
+ margin-bottom: 8px;
+ line-height: 1.3;
+ }
 
-        .header p {
-            font-size: 13px;
-            color: #64748b;
-            line-height: 1.6;
-        }
+ .header p {
+ font-size: 13px;
+ color: #64748b;
+ line-height: 1.5;
+ }
 
-        .tag {
-            display: inline-block;
-            background: #dbeafe;
-            color: #1d4ed8;
-            font-size: 11px;
-            font-weight: 600;
-            padding: 4px 12px;
-            border-radius: 20px;
-            margin-top: 8px;
-        }
+ .tag {
+ display: inline-block;
+ background: #dbeafe;
+ color: #1e40af;
+ font-size: 11px;
+ padding: 4px 10px;
+ border-radius: 20px;
+ font-weight: 600;
+ margin-top: 8px;
+ }
 
-        .info-card {
-            background: #f8fafc;
-            border-radius: 12px;
-            padding: 16px;
-            border: 1px solid #e2e8f0;
-        }
+ .info-card {
+ background: #f8fafc;
+ border: 1px solid #e2e8f0;
+ border-radius: 12px;
+ padding: 16px;
+ transition: all 0.2s;
+ }
 
-        .card-title {
-            font-size: 14px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 12px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
+ .info-card:hover {
+ border-color: #cbd5e1;
+ box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+ }
 
-        .card-content {
-            font-size: 13px;
-            color: #475569;
-            line-height: 1.8;
-        }
+ .card-title {
+ font-size: 14px;
+ font-weight: 700;
+ color: #0f172a;
+ margin-bottom: 12px;
+ display: flex;
+ align-items: center;
+ gap: 8px;
+ }
 
-        .card-content .spot {
-            display: flex;
-            align-items: flex-start;
-            gap: 8px;
-            margin-bottom: 8px;
-            padding: 6px 0;
-            border-bottom: 1px solid #f1f5f9;
-        }
+ .card-content {
+ font-size: 13px;
+ color: #475569;
+ line-height: 1.6;
+ }
 
-        .card-content .spot:last-child { border-bottom: none; }
+ .card-content strong {
+ color: #0f172a;
+ font-weight: 600;
+ }
 
-        .spot-time {
-            font-size: 11px;
-            color: #0369a1;
-            font-weight: 600;
-            background: #e0f2fe;
-            padding: 2px 8px;
-            border-radius: 4px;
-            white-space: nowrap;
-            flex-shrink: 0;
-        }
+ .highlight-box {
+ background: #fff7ed;
+ border-left: 4px solid #f97316;
+ padding: 12px;
+ margin: 12px 0;
+ border-radius: 0 8px 8px 0;
+ font-size: 13px;
+ }
 
-        .spot-name {
-            font-weight: 600;
-            color: #0f172a;
-        }
+ .highlight-box.dinner {
+ background: #fdf2f8;
+ border-left-color: #ec4899;
+ }
 
-        .spot-desc {
-            font-size: 12px;
-            color: #64748b;
-        }
+ .highlight-title {
+ font-weight: 700;
+ color: #0f172a;
+ margin-bottom: 4px;
+ display: flex;
+ align-items: center;
+ gap: 6px;
+ font-size: 13px;
+ }
 
-        .legend-title {
-            font-size: 11px;
-            font-weight: 700;
-            color: #64748b;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
+ .legend-section {
+ margin-top: auto;
+ padding-top: 16px;
+ border-top: 1px solid #e2e8f0;
+ }
 
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            margin-bottom: 10px;
-            font-size: 13px;
-            color: #475569;
-        }
+ .legend-title {
+ font-size: 12px;
+ font-weight: 700;
+ color: #64748b;
+ margin-bottom: 12px;
+ text-transform: uppercase;
+ letter-spacing: 0.5px;
+ }
 
-        .color-line {
-            width: 28px;
-            height: 4px;
-            border-radius: 2px;
-            flex-shrink: 0;
-        }
+ .legend-item {
+ display: flex;
+ align-items: center;
+ gap: 10px;
+ margin-bottom: 10px;
+ font-size: 13px;
+ color: #475569;
+ }
 
-        .day1 { background: #3b82f6; }
-        .day2 { background: #ef4444; }
-        .day3 { background: #10b981; }
+ .color-line {
+ width: 28px;
+ height: 4px;
+ border-radius: 2px;
+ flex-shrink: 0;
+ }
 
-        @media (max-width: 1024px) {
-            .container { flex-direction: column; }
-            .sidebar {
-                width: 100%;
-                height: 45vh;
-                min-width: auto;
-                border-right: none;
-                border-top: 1px solid #e2e8f0;
-                order: 2;
-                padding: 16px 20px;
-                box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
-            }
-            .map-container { height: 55vh; order: 1; }
-            .header h1 { font-size: 18px; }
-        }
+ .day1 { background: #3b82f6; }
+ .day2 { background: #ef4444; }
+ .day3 { background: #10b981; }
 
-        @media (max-width: 640px) {
-            .sidebar { height: 40vh; padding: 12px 16px; gap: 12px; }
-            .map-container { height: 60vh; }
-            .info-card { padding: 12px; }
-            .card-title { font-size: 13px; }
-            .card-content { font-size: 12px; }
-        }
+ @media (max-width: 1024px) {
+ .container { flex-direction: column; }
+ .sidebar {
+ width: 100%; height: 45vh; min-width: auto;
+ border-right: none; border-top: 1px solid #e2e8f0;
+ order: 2; padding: 16px 20px;
+ box-shadow: 0 -4px 20px rgba(0,0,0,0.05);
+ }
+ .map-container { height: 55vh; order: 1; }
+ .header h1 { font-size: 18px; }
+ }
 
-        .leaflet-popup-content-wrapper {
-            background: #ffffff;
-            color: #1e293b;
-            border-radius: 12px;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.15);
-            padding: 4px;
-        }
+ @media (max-width: 640px) {
+ .sidebar { height: 40vh; padding: 12px 16px; gap: 12px; }
+ .map-container { height: 60vh; }
+ .info-card { padding: 12px; }
+ .card-title { font-size: 13px; }
+ .card-content { font-size: 12px; }
+ }
 
-        .leaflet-popup-tip {
-            background: #ffffff;
-            border: 1px solid #e2e8f0;
-        }
+ .leaflet-popup-content-wrapper {
+ background: #ffffff; color: #1e293b;
+ border-radius: 12px; border: 1px solid #e2e8f0;
+ box-shadow: 0 10px 40px rgba(0,0,0,0.15); padding: 4px;
+ }
 
-        .leaflet-container a.leaflet-popup-close-button {
-            color: #64748b;
-            font-weight: 700;
-            padding: 8px;
-        }
+ .leaflet-popup-tip { background: #ffffff; border: 1px solid #e2e8f0; }
 
-        .popup-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #0f172a;
-            margin-bottom: 8px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 4px 4px 0 4px;
-        }
+ .leaflet-container a.leaflet-popup-close-button {
+ color: #64748b; font-weight: 700; padding: 8px;
+ }
 
-        .popup-desc {
-            font-size: 13px;
-            color: #475569;
-            line-height: 1.5;
-            margin-bottom: 6px;
-            padding: 0 4px;
-        }
+ .popup-title {
+ font-size: 15px; font-weight: 700; color: #0f172a;
+ margin-bottom: 8px; display: flex; align-items: center;
+ gap: 8px; padding: 4px 4px 0 4px;
+ }
 
-        .popup-time {
-            font-size: 12px;
-            color: #0369a1;
-            font-weight: 600;
-            background: #e0f2fe;
-            padding: 4px 10px;
-            border-radius: 6px;
-            display: inline-block;
-            margin-top: 4px;
-        }
+ .popup-desc {
+ font-size: 13px; color: #475569; line-height: 1.5;
+ margin-bottom: 6px; padding: 0 4px;
+ }
 
-        .dinner-badge {
-            display: inline-block;
-            background: #ec4899;
-            color: white;
-            font-size: 10px;
-            padding: 2px 8px;
-            border-radius: 4px;
-            margin-left: 8px;
-            font-weight: 600;
-        }
+ .popup-time {
+ font-size: 12px; color: #0369a1; font-weight: 600;
+ background: #e0f2fe; padding: 4px 10px; border-radius: 6px;
+ display: inline-block; margin-top: 4px;
+ }
 
-        .custom-div-icon {
-            background: transparent !important;
-            border: none !important;
-        }
-    </style>
+ .dinner-badge {
+ display: inline-block; background: #ec4899; color: white;
+ font-size: 10px; padding: 2px 8px; border-radius: 4px;
+ margin-left: 8px; font-weight: 600;
+ }
+
+ .custom-div-icon { background: transparent !important; border: none !important; }
+
+ @keyframes pulse {
+ 0% { box-shadow: 0 0 0 0 rgba(13,148,136,0.4); }
+ 70% { box-shadow: 0 0 0 10px rgba(13,148,136,0); }
+ 100% { box-shadow: 0 0 0 0 rgba(13,148,136,0); }
+ }
+ </style>
 </head>
 <body>
-    <div class="container">
-        <div class="sidebar">
-            <div class="header">
-                <h1>BAJI BAZAAR 大阪商业考察</h1>
-                <p>3日深度行程导游地图<br>住宿：阿倍野区阪南町3-38-23 | 22:20起飞</p>
-                <span class="tag">AI原生餐饮内容平台考察</span>
-            </div>
+ <div class="container">
+ <div class="sidebar">
+ <div class="header">
+ <h1>BAJI BAZAAR 大阪商业考察</h1>
+ <p>3日深度行程导游地图<br>住宿：阿倍野区阪南町3-38-23 | 22:20起飞</p>
+ <span class="tag">AI原生餐饮内容平台考察</span>
+ </div>
 
-            <div class="info-card">
-                <div class="card-title">
-                    <i class="fas fa-route" style="color: #3b82f6;"></i>
-                    Day 1 · 关西机场→大阪站周边
-                </div>
-                <div class="card-content">
-                    <div class="spot">
-                        <span class="spot-time">14:00</span>
-                        <div><div class="spot-name">关西国际机场</div><div class="spot-desc">抵达，南海电铁/JR前往市区</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">15:30</span>
-                        <div><div class="spot-name">Time Out Osaka</div><div class="spot-desc">全球美食媒体本地化运营案例</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">16:30</span>
-                        <div><div class="spot-name">Red Rock</div><div class="spot-desc">高端牛肉盖饭连锁品牌模式</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">17:30</span>
-                        <div><div class="spot-name">木地 鸡肉串</div><div class="spot-desc">本地烧鸟名店，小店经营模式</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">19:00</span>
-                        <div><div class="spot-name">新梅田食道街</div><div class="spot-desc">复古地下街美食文化聚集地</div></div>
-                    </div>
-                </div>
-            </div>
+ <div class="info-card">
+ <div class="card-title">
+ <i class="fas fa-route" style="color: #3b82f6;"></i>
+ Day 1：梅田新商业 + 大阪烧晚餐
+ </div>
+ <div class="card-content">
+ <strong>核心考察：</strong>Time Out Market Osaka（亚洲首个策展式美食广场）<br>
+ <strong>对比点：</strong>re:Dine Osaka（订阅制数字化Food Hall）<br>
+ <strong>夜宵：</strong>新梅田食道街（昭和小巷文化）
+ <div class="highlight-box dinner">
+ <div class="highlight-title">
+ <i class="fas fa-utensils" style="color: #ec4899;"></i>
+ 特色晚餐：お好み焼き きじ
+ </div>
+ 梅田蓝天大厦门前，70年历史大阪烧名店<br>
+ 推荐：豚玉モダン（猪肉蛋Modern烧）
+ </div>
+ </div>
+ </div>
 
-            <div class="info-card">
-                <div class="card-title">
-                    <i class="fas fa-route" style="color: #ef4444;"></i>
-                    Day 2 · 中崎町→大阪城→道顿堀
-                </div>
-                <div class="card-content">
-                    <div class="spot">
-                        <span class="spot-time">09:30</span>
-                        <div><div class="spot-name">Mel Coffee Roasters</div><div class="spot-desc">精品咖啡烘焙品牌</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">10:30</span>
-                        <div><div class="spot-name">Gran Knot</div><div class="spot-desc">手工面包店，社区型餐饮</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">12:00</span>
-                        <div><div class="spot-name">B Portland</div><div class="spot-desc">美式brunch本地化改造</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">14:00</span>
-                        <div><div class="spot-name">PARCO 美食层</div><div class="spot-desc">商业综合体餐饮策划</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">15:30</span>
-                        <div><div class="spot-name">Lilo & Coffee</div><div class="spot-desc">社区咖啡店运营模式</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">18:00</span>
-                        <div><div class="spot-name">Zuboraya 河豚料理</div><div class="spot-desc">道顿堀标志性餐饮老铺</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">20:00</span>
-                        <div><div class="spot-name">Jan Jan 横丁</div><div class="spot-desc">新世界复古饮酒街文化</div></div>
-                    </div>
-                </div>
-            </div>
+ <div class="info-card">
+ <div class="card-title">
+ <i class="fas fa-coffee" style="color: #ef4444;"></i>
+ Day 2：咖啡巡礼 + 河豚料理晚餐
+ </div>
+ <div class="card-content">
+ <strong>上午：</strong>Mel Coffee（15㎡极简模型）→ Granknot（空间美学）<br>
+ <strong>中午：</strong>B Portland（三层空间效率教科书）<br>
+ <strong>下午：</strong>心斋桥PARCO（全息能乐/IP联名）→ Lilo Coffee<br>
+ <strong>夜宵：</strong>ジャンジャン横丁（通天阁串カツ）
+ <div class="highlight-box dinner">
+ <div class="highlight-title">
+ <i class="fas fa-fish" style="color: #ec4899;"></i>
+ 特色晚餐：づぼらや (Zuboraya)
+ </div>
+ 法善寺横丁内百年河豚老铺<br>
+ 灯笼地标、河豚刺身/火锅体验
+ </div>
+ </div>
+ </div>
 
-            <div class="info-card">
-                <div class="card-title">
-                    <i class="fas fa-route" style="color: #10b981;"></i>
-                    Day 3 · 阿倍野→难波→机场
-                </div>
-                <div class="card-content">
-                    <div class="spot">
-                        <span class="spot-time">09:00</span>
-                        <div><div class="spot-name">阿倍野HARUKAS</div><div class="spot-desc">日本最高楼，综合体商业运营</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">11:00</span>
-                        <div><div class="spot-name">Takamura Wine</div><div class="spot-desc">高性价比葡萄酒零售+餐饮模式</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">12:30</span>
-                        <div><div class="spot-name">Brooklyn Parlor</div><div class="spot-desc">书店+酒吧跨界餐饮空间</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">15:00</span>
-                        <div><div class="spot-name">难波Parks</div><div class="spot-desc">屋顶花园+餐饮融合，公园导流模式</div></div>
-                    </div>
-                    <div class="spot">
-                        <span class="spot-time">17:30</span>
-                        <div><div class="spot-name">关西国际机场</div><div class="spot-desc">22:20起飞返程</div></div>
-                    </div>
-                </div>
-            </div>
+ <div class="info-card">
+ <div class="card-title">
+ <i class="fas fa-plane-departure" style="color: #10b981;"></i>
+ Day 3：对比考察 + 返程（22:20起飞）
+ </div>
+ <div class="card-content">
+ <strong>上午：</strong>阿倍野Harukas（传统百货餐饮层对比）<br>
+ <strong>咖啡：</strong>Takamura（葡萄酒+咖啡复合业态）<br>
+ <strong>供应链：</strong>Brooklyn Roasting（B2B烘焙可视化）<br>
+ <strong>下午：</strong>难波Parks（传统美食广场对照组）→ 南海电铁直达机场
+ </div>
+ </div>
 
-            <div class="info-card">
-                <div class="legend-title">路线图例</div>
-                <div class="legend-item"><div class="color-line day1"></div>Day 1 · 大阪站周边</div>
-                <div class="legend-item"><div class="color-line day2"></div>Day 2 · 中崎町→道顿堀</div>
-                <div class="legend-item"><div class="color-line day3"></div>Day 3 · 阿倍野→难波</div>
-            </div>
-        </div>
+ <div class="legend-section">
+ <div class="legend-title">路线图例</div>
+ <div class="legend-item">
+ <div class="color-line day1"></div>
+ <span>Day 1 梅田新商业（机场→Time Out→大阪烧→宵夜）</span>
+ </div>
+ <div class="legend-item">
+ <div class="color-line day2"></div>
+ <span>Day 2 咖啡巡礼（堀江→B Portland→PARCO→河豚→串カツ）</span>
+ </div>
+ <div class="legend-item">
+ <div class="color-line day3"></div>
+ <span>Day 3 对比考察（阿倍野→Brooklyn→难波→机场）</span>
+ </div>
+ </div>
+ </div>
 
-        <div class="map-container">
-            <div id="map"></div>
-        </div>
-    </div>
+ <div class="map-container">
+ <div id="map"></div>
+ </div>
+ </div>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script>
-        const map = L.map('map', {
-            center: [34.67, 135.50],
-            zoom: 13,
-            zoomControl: false
-        });
+ <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+ <script>
+ const map = L.map('map', {
+ center: [34.665, 135.495],
+ zoom: 13,
+ zoomControl: false,
+ attributionControl: false
+ });
 
-        L.control.zoom({ position: 'topright' }).addTo(map);
+ L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
+ attribution: '&copy; OpenStreetMap &copy; CARTO',
+ subdomains: 'abcd',
+ maxZoom: 20
+ }).addTo(map);
 
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', {
-            attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>',
-            maxZoom: 19
-        }).addTo(map);
+ L.control.zoom({ position: 'bottomright' }).addTo(map);
 
-        function createIcon(color, emoji) {
-            return L.divIcon({
-                className: 'custom-div-icon',
-                html: `<div style="background:${color};color:#fff;border-radius:50%;width:32px;height:32px;display:flex;align-items:center;justify-content:center;font-size:14px;box-shadow:0 2px 8px ${color}80;border:2px solid #fff;">${emoji}</div>`,
-                iconSize: [32, 32],
-                iconAnchor: [16, 16],
-                popupAnchor: [0, -20]
-            });
-        }
+ const createIcon = (color, size = 12, pulse = false) => {
+ const pulseAnim = pulse ? 'animation: pulse 2s infinite;' : '';
+ return L.divIcon({
+ className: 'custom-div-icon',
+ html: `<div style="background:${color};width:${size}px;height:${size}px;border-radius:50%;border:2.5px solid #ffffff;box-shadow:0 3px 8px rgba(0,0,0,0.3),0 0 0 1px rgba(0,0,0,0.1);${pulseAnim}"></div>`,
+ iconSize: [size, size],
+ iconAnchor: [size/2, size/2]
+ });
+ };
 
-        // 坐标点
-        const points = {
-            airport: [34.4346, 135.2445],
-            hotel: [34.6458, 135.5133],
-            day1: {
-                timeout: [34.6723, 135.5012],
-                redine: [34.6715, 135.4998],
-                kiji: [34.6702, 135.5025],
-                shinumeda: [34.6728, 135.4975]
-            },
-            day2: {
-                mel: [34.6775, 135.5015],
-                granknot: [34.6788, 135.5025],
-                bportland: [34.6795, 135.5005],
-                parco: [34.6655, 135.5010],
-                lilo: [34.6612, 135.5055],
-                zuboraya: [34.6685, 135.5030],
-                janjan: [34.6525, 135.5065]
-            },
-            day3: {
-                harukas: [34.6470, 135.5140],
-                takamura: [34.6630, 135.5045],
-                brooklyn: [34.6665, 135.5010],
-                nambaparks: [34.6545, 135.5010]
-            }
-        };
+ const icons = {
+ airport: createIcon('#f59e0b', 14),
+ hotel: createIcon('#6366f1', 12),
+ foodhall: createIcon('#0d9488', 16, true),
+ coffee: createIcon('#dc2626', 14),
+ dinner: createIcon('#db2777', 16),
+ night: createIcon('#7c3aed', 12),
+ compare: createIcon('#2563eb', 12)
+ };
 
-        // Day 1 标记（蓝色）
-        L.marker(points.airport, { icon: createIcon('#3b82f6', '✈️') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title">✈️ 关西国际机场</div><div class="popup-desc">南海电铁/JR直达市区<br>约45分钟</div><div class="popup-time">Day 1 14:00 抵达</div>');
+ const points = {
+ airport: [34.4347, 135.2440],
+ hotel: [34.6336, 135.5235],
+ day1: {
+ timeout: [34.7025, 135.4959],
+ redine: [34.7020, 135.4955],
+ kiji: [34.7055, 135.4890],
+ shinumeda: [34.7047, 135.4992]
+ },
+ day2: {
+ mel: [34.6783, 135.4978],
+ granknot: [34.6785, 135.4975],
+ bportland: [34.6788, 135.5015],
+ parco: [34.6745, 135.5011],
+ lilo: [34.6687, 135.5013],
+ zuboraya: [34.6680, 135.5012],
+ hozenji: [34.6680, 135.5015],
+ janjan: [34.6520, 135.5060]
+ },
+ day3: {
+ harukas: [34.6458, 135.5140],
+ takamura: [34.6470, 135.5200],
+ brooklyn: [34.6900, 135.5100],
+ nambaparks: [34.6610, 135.5030]
+ }
+ };
 
-        L.marker(points.hotel, { icon: createIcon('#6366f1', '🏨') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title">🏨 住宿</div><div class="popup-desc">阿倍野区阪南町3-38-23</div><div class="popup-time">3晚住宿</div>');
+ // 所有标记
+ L.marker(points.airport, {icon: icons.airport}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-plane" style="color: #f59e0b;"></i> 关西国际机场 (KIX)</div><div class="popup-desc">Day 1 14:00落地<br>Day 3 22:20起飞回国<br>南海电铁/机场特急直达</div>');
 
-        L.marker(points.day1.timeout, { icon: createIcon('#3b82f6', '1') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-newspaper" style="color: #2563eb;"></i> Time Out Osaka</div><div class="popup-desc">全球美食媒体本地化运营<br>内容驱动餐饮推荐模式</div><div class="popup-time">Day 1 15:30</div>');
+ L.marker(points.hotel, {icon: icons.hotel}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-hotel" style="color: #6366f1;"></i> 住宿：阿倍野区阪南町3-38-23</div><div class="popup-desc">3日行程基地（天王寺商圈）<br>近铁百货/阿倍野Harukas隔壁<br>御堂筋线直达梅田/心斋桥</div>');
 
-        L.marker(points.day1.redine, { icon: createIcon('#3b82f6', '2') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-utensils" style="color: #2563eb;"></i> Red Rock</div><div class="popup-desc">高端牛肉盖饭连锁品牌<br>标准化+品质感平衡</div><div class="popup-time">Day 1 16:30</div>');
+ // Day 1
+ L.marker(points.day1.timeout, {icon: icons.foodhall}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-store" style="color: #0d9488;"></i> Time Out Market Osaka</div><div class="popup-desc">亚洲首个策展式美食广场<br>Grand Green Osaka南馆B1F<br>17家精选餐厅+文化体验+酒吧</div><div class="popup-time">Day 1 16:30-19:00 核心考察</div>');
 
-        L.marker(points.day1.kiji, { icon: createIcon('#3b82f6', '3') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-fire" style="color: #2563eb;"></i> 木地 鸡肉串</div><div class="popup-desc">本地烧鸟名店<br>小店高坪效经营模式</div><div class="popup-time">Day 1 17:30</div>');
+ L.marker(points.day1.redine, {icon: icons.compare}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-utensils" style="color: #2563eb;"></i> re:Dine Osaka</div><div class="popup-desc">次世代Food Hall<br>订阅制模式+数字化会员<br>Grand Green北馆JAM BASE 1F</div><div class="popup-time">Day 1 17:00-17:30</div>');
 
-        L.marker(points.day1.shinumeda, { icon: createIcon('#3b82f6', '4') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-store" style="color: #2563eb;"></i> 新梅田食道街</div><div class="popup-desc">复古地下街美食文化聚集地<br>昭和氛围+现代餐饮融合</div><div class="popup-time">Day 1 19:00 <span class="dinner-badge">晚餐</span></div>');
+ L.marker(points.day1.kiji, {icon: icons.dinner}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-fire" style="color: #db2777;"></i> お好み焼き きじ (Kiji)<span class="dinner-badge">DAY1晚餐</span></div><div class="popup-desc"><strong>梅田蓝天大厦门前名店</strong><br>70年历史大阪烧老铺<br>豚玉モダン(猪肉蛋Modern烧)必点<br>梅田西站前高架下</div><div class="popup-time">Day 1 19:00-20:00 特色晚餐</div>');
 
-        // Day 2 标记（红色）
-        L.marker(points.day2.mel, { icon: createIcon('#ef4444', '1') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-mug-hot" style="color: #dc2626;"></i> Mel Coffee Roasters</div><div class="popup-desc">精品咖啡烘焙品牌<br>单品豆+手冲文化</div><div class="popup-time">Day 2 09:30</div>');
+ L.marker(points.day1.shinumeda, {icon: icons.night}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-moon" style="color: #7c3aed;"></i> 新梅田食道街</div><div class="popup-desc">昭和复古小巷夜宵<br>炸串/烧鸟/立饮<br>高密度餐饮内容体验</div><div class="popup-time">Day 1 20:00-22:30 夜宵</div>');
 
-        L.marker(points.day2.granknot, { icon: createIcon('#ef4444', '2') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-bread-slice" style="color: #dc2626;"></i> Gran Knot</div><div class="popup-desc">手工面包店<br>社区型餐饮粘性运营</div><div class="popup-time">Day 2 10:30</div>');
+ // Day 2
+ L.marker(points.day2.mel, {icon: icons.coffee}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-coffee" style="color: #dc2626;"></i> Mel Coffee Roasters</div><div class="popup-desc">大阪第一精品咖啡<br>15㎡极简高流转模型<br>Probat烘焙机/绿色品牌视觉</div><div class="popup-time">Day 2 09:30-10:30</div>');
 
-        L.marker(points.day2.bportland, { icon: createIcon('#ef4444', '3') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-egg" style="color: #dc2626;"></i> B Portland</div><div class="popup-desc">美式brunch本地化改造<br>拍照友好型空间设计</div><div class="popup-time">Day 2 12:00</div>');
+ L.marker(points.day2.granknot, {icon: icons.coffee}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-coffee" style="color: #dc2626;"></i> Granknot Coffee</div><div class="popup-desc">空间美学教科书<br>工业风+杂志陈列<br>复合业态(咖啡+轻食+零售)</div><div class="popup-time">Day 2 10:30-11:15</div>');
 
-        L.marker(points.day2.parco, { icon: createIcon('#ef4444', '4') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-building" style="color: #dc2626;"></i> PARCO 美食层</div><div class="popup-desc">商业综合体餐饮策划<br>楼层动线与品牌组合逻辑</div><div class="popup-time">Day 2 14:00</div>');
+ L.marker(points.day2.bportland, {icon: icons.coffee}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-coffee" style="color: #dc2626;"></i> B Portland Coffee Roastery</div><div class="popup-desc">三层空间效率教科书<br>1F烘焙可视化+3F堂食<br>500日元早餐套餐/甜甜圈</div><div class="popup-time">Day 2 12:00-13:30 午餐</div>');
 
-        L.marker(points.day2.lilo, { icon: createIcon('#ef4444', '5') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-coffee" style="color: #dc2626;"></i> Lilo & Coffee</div><div class="popup-desc">社区咖啡店运营模式<br>高频复购型产品结构</div><div class="popup-time">Day 2 15:30</div>');
+ L.marker(points.day2.parco, {icon: icons.compare}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-building" style="color: #2563eb;"></i> 心斋桥PARCO</div><div class="popup-desc">13F三田屋(全息能乐数字体验)<br>B2Fちいかわ拉面(IP联名)<br>年轻人的百货店</div><div class="popup-time">Day 2 14:00-17:00</div>');
 
-        L.marker(points.day2.zuboraya, { icon: createIcon('#ef4444', '6') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-fish" style="color: #dc2626;"></i> Zuboraya 河豚料理</div><div class="popup-desc">道顿堀标志性餐饮老铺<br>传统品类IP化运营</div><div class="popup-time">Day 2 18:00 <span class="dinner-badge">晚餐</span></div>');
+ L.marker(points.day2.lilo, {icon: icons.coffee}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-coffee" style="color: #dc2626;"></i> Lilo Coffee Roasters</div><div class="popup-desc">道顿堀核心区精品咖啡<br>游客区中的安静绿洲<br>国际化友好/长营业至22:00</div><div class="popup-time">Day 2 17:30-18:30</div>');
 
-        L.marker(points.day2.janjan, { icon: createIcon('#ef4444', '7') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-beer-mug-empty" style="color: #dc2626;"></i> Jan Jan 横丁</div><div class="popup-desc">新世界复古饮酒街文化<br>夜间经济+社交场景</div><div class="popup-time">Day 2 20:00</div>');
+ L.marker(points.day2.zuboraya, {icon: icons.dinner}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-fish" style="color: #db2777;"></i> づぼらや (Zuboraya)<span class="dinner-badge">DAY2晚餐</span></div><div class="popup-desc"><strong>法善寺横丁内河豚名店</strong><br>百年历史/灯笼地标<br>河豚刺身/河豚火锅<br>传统高级日料体验</div><div class="popup-time">Day 2 18:30-20:00 特色晚餐</div>');
 
-        // Day 3 标记（绿色）
-        L.marker(points.day3.harukas, { icon: createIcon('#10b981', '1') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-city" style="color: #059669;"></i> 阿倍野HARUKAS</div><div class="popup-desc">日本最高楼·综合体商业运营<br>百货+美术馆+观景台业态组合</div><div class="popup-time">Day 3 09:00</div>');
+ L.marker(points.day2.hozenji, {icon: icons.night}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-torii-gate" style="color: #7c3aed;"></i> 法善寺横丁</div><div class="popup-desc">石板路+灯笼传统小巷<br>高密度居酒屋/传统氛围<br>与道顿堀主街对比</div><div class="popup-time">Day 2 18:30-19:30</div>');
 
-        L.marker(points.day3.takamura, { icon: createIcon('#10b981', '2') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-wine-bottle" style="color: #059669;"></i> Takamura Wine</div><div class="popup-desc">高性价比葡萄酒零售+餐饮<br>酒类零售带动餐饮消费模式</div><div class="popup-time">Day 3 11:00</div>');
+ L.marker(points.day2.janjan, {icon: icons.night}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-star" style="color: #7c3aed;"></i> ジャンジャン横丁</div><div class="popup-desc">新世界通天阁夜景<br>昭和复古串カツ街<br>炸串文化体验</div><div class="popup-time">Day 2 20:00-21:30 夜宵</div>');
 
-        L.marker(points.day3.brooklyn, { icon: createIcon('#10b981', '3') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-book" style="color: #059669;"></i> Brooklyn Parlor</div><div class="popup-desc">书店+酒吧跨界餐饮空间<br>文化体验型餐饮业态</div><div class="popup-time">Day 3 12:30</div>');
+ // Day 3
+ L.marker(points.day3.harukas, {icon: icons.compare}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-building" style="color: #2563eb;"></i> 阿倍野Harukas</div><div class="popup-desc">近铁百货传统餐饮层<br>与Time Out形成新旧对比<br>本地白领午餐生态观察</div><div class="popup-time">Day 3 09:00-10:30</div>');
 
-        L.marker(points.day3.nambaparks, { icon: createIcon('#10b981', '4') })
-            .addTo(map)
-            .bindPopup('<div class="popup-title"><i class="fas fa-tree" style="color: #2563eb;"></i> 难波Parks</div><div class="popup-desc">传统美食广场对照组<br>屋顶花园+餐饮融合<br>公园+餐饮导流模式<br>南海电铁直达机场</div><div class="popup-time">Day 3 15:00-17:00</div>');
+ L.marker(points.day3.takamura, {icon: icons.coffee}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-wine-glass" style="color: #dc2626;"></i> Takamura Wine & Coffee</div><div class="popup-desc">葡萄酒+咖啡复合业态<br>自然酒+现烘烘焙<br>成人向餐饮内容</div><div class="popup-time">Day 3 10:30-11:30</div>');
 
-        // Day 1 路线（蓝色）
-        L.polyline([
-            points.airport, points.hotel, points.day1.timeout,
-            points.day1.redine, points.day1.kiji, points.day1.shinumeda, points.hotel
-        ], {
-            color: '#2563eb', weight: 5, opacity: 0.7, lineCap: 'round', lineJoin: 'round'
-        }).addTo(map);
+ L.marker(points.day3.brooklyn, {icon: icons.coffee}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-industry" style="color: #dc2626;"></i> Brooklyn Roasting</div><div class="popup-desc">大型烘焙机可视化<br>B2B供应链展示<br>前店后厂Warehouse风格</div><div class="popup-time">Day 3 13:30-15:00</div>');
 
-        // Day 2 路线（红色）
-        L.polyline([
-            points.hotel, points.day2.mel, points.day2.granknot,
-            points.day2.bportland, points.day2.parco, points.day2.lilo,
-            points.day2.zuboraya, points.day2.janjan, points.hotel
-        ], {
-            color: '#dc2626', weight: 5, opacity: 0.7, lineCap: 'round', lineJoin: 'round'
-        }).addTo(map);
+ L.marker(points.day3.nambaparks, {icon: icons.compare}).addTo(map)
+ .bindPopup('<div class="popup-title"><i class="fas fa-tree" style="color: #2563eb;"></i> 难波Parks</div><div class="popup-desc">传统美食广场对照组<br>屋顶花园+餐饮融合<br>公园+餐饮导流模式<br>南海电铁直达机场</div><div class="popup-time">Day 3 15:00-17:00</div>');
 
-        // Day 3 路线（绿色）
-        L.polyline([
-            points.hotel, points.day3.harukas, points.day3.takamura,
-            points.day3.brooklyn, points.day3.nambaparks, points.airport
-        ], {
-            color: '#059669', weight: 5, opacity: 0.7, lineCap: 'round', lineJoin: 'round', dashArray: '10, 10'
-        }).addTo(map);
+ // Day 1 路线（蓝色）
+ L.polyline([
+ points.airport, points.hotel, points.day1.timeout,
+ points.day1.redine, points.day1.kiji, points.day1.shinumeda, points.hotel
+ ], { color: '#2563eb', weight: 5, opacity: 0.7, lineCap: 'round', lineJoin: 'round' }).addTo(map);
 
-        map.fitBounds([[34.43, 135.24], [34.71, 135.52]], { padding: [80, 80] });
-    </script>
+ // Day 2 路线（红色）
+ L.polyline([
+ points.hotel, points.day2.mel, points.day2.granknot,
+ points.day2.bportland, points.day2.parco, points.day2.lilo,
+ points.day2.zuboraya, points.day2.hozenji, points.day2.janjan, points.hotel
+ ], { color: '#dc2626', weight: 5, opacity: 0.7, lineCap: 'round', lineJoin: 'round' }).addTo(map);
+
+ // Day 3 路线（绿色）
+ L.polyline([
+ points.hotel, points.day3.harukas, points.day3.takamura,
+ points.day3.brooklyn, points.day3.nambaparks, points.airport
+ ], { color: '#059669', weight: 5, opacity: 0.7, lineCap: 'round', lineJoin: 'round', dashArray: '10, 10' }).addTo(map);
+
+ map.fitBounds([[34.43, 135.24], [34.71, 135.52]], { padding: [80, 80] });
+ </script>
 </body>
 </html>
